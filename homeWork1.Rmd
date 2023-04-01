@@ -1,0 +1,255 @@
+---
+title: "homework_1"
+author: "Rashedul Islam"
+date: "3/7/2023"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+#Load R Packages
+```{r}
+#chooseCRANmirror()
+local({r <- getOption("repos")
+       r["CRAN"] <- "http://cran.r-project.org" 
+       options(repos=r)
+})
+install.packages("stringr")
+```
+
+
+```{r}
+
+library(readr)
+install.packages("tidyverse")
+library(dplyr)
+library(magrittr)
+library(stringr)
+
+```
+
+#Load R Data
+```{r}
+bd_rice_production <- read_csv("bd_rice_production.csv")
+bd_district <- read_csv("bd_district.csv")
+bd_division <- read_csv("bd_division.csv")
+raj_soil_data <- read_csv("raj_soil_data.csv")
+bd_soil_data_raw <- read_csv("bd_soil_data_raw.csv")
+```
+
+#Task1
+```{r}
+production_district = dplyr::inner_join(bd_rice_production, bd_district) 
+head(production_district)
+```
+#Task2
+```{r}
+district_division = dplyr::inner_join(production_district, bd_division) 
+head(district_division)
+```
+#Task3
+```{r}
+df <- district_division %>%
+  relocate(DIVISION_PCODE, DIVISION_NAME, DISTRICT_ID, DISTRICT_NAME, YEAR, MT)
+head(df)
+```
+#Task4
+```{r}
+district <- bd_district %>% 
+        dplyr::rename("DISTRICT_PCODE" = "DISTRICT_ID")
+names(district)
+```
+#Task5
+```{r}
+df.rice = dplyr::inner_join(bd_rice_production, bd_district) %>% 
+          dplyr::inner_join(bd_division) %>%
+          dplyr::relocate(DIVISION_PCODE, DIVISION_NAME, DISTRICT_ID,DISTRICT_NAME, YEAR, MT) %>%
+          dplyr::rename("DISTRICT_PCODE" = "DISTRICT_ID") %>%
+        glimpse()
+```
+#Task6
+```{r}
+df.rice %>% 
+           dplyr::select(DIVISION_NAME, YEAR,  MT,) %>%
+           glimpse()
+```
+#Task7
+```{r}
+df.rice %>% 
+  dplyr::filter(DIVISION_NAME == "Rajshahi")
+levels(as.factor(df.rice$DIVISION_NAME)) %>% glimpse()
+```
+#Task8
+```{r}
+df.rice %>% 
+              dplyr::filter(DIVISION_NAME %in% c("Dhaka", "Rajshahi"))
+levels(as.factor(df.rice$DIVISION_NAME))
+```
+#Task9
+```{r}
+df.rice %>% 
+              dplyr::filter(DIVISION_NAME == "Dhaka" | DIVISION_NAME == "Rajshahi")
+levels(as.factor(df.rice$DIVISION_NAME))
+```
+#Task10
+```{r}
+district_division %>% 
+  dplyr:: filter(DIVISION_NAME == "Rajshahi" & DISTRICT_NAME == "Bogra")
+levels(lapply(district_division[, c(2, 4)], as.factor))
+```
+#Task11
+```{r}
+df.rice %>% 
+              dplyr::filter(MT > mean(MT, na.rm = TRUE))
+levels(as.factor(df.rice$DISTRICT_NAME))
+```
+#Task12
+```{r}
+df.rice %>% 
+              dplyr::filter(MT > mean(MT, na.rm = TRUE) & YEAR ==2018 & YEAR ==2019)
+levels(as.factor(df.rice$DISTRICT_NAME))
+```
+
+#Task13
+```{r}
+df.rice %>% 
+          dplyr::filter(grepl("^P", DISTRICT_NAME))
+levels(as.factor(df.rice$DISTRICT_NAME))
+```
+#Task14
+```{r}
+raj_soil_data %>%
+    dplyr::summarise_at("SOM", mean, na.rm = TRUE)
+```
+
+#Task15
+```{r}
+raj_soil_data %>%
+    dplyr::summarise_at(c("SOM", "NDVI"), mean, na.rm = TRUE)
+```
+
+#Task16
+```{r}
+raj_soil_data %>%
+    dplyr::summarise_if(is.numeric, mean, na.rm = TRUE)
+```
+
+#Task17
+```{r}
+raj_soil_data %>%
+    # First select  numerical columns
+    dplyr::select(pH,SOM, DEM, NDVI, NDFI) %>%
+    # get mean of all these variables
+    dplyr::summarise_all(mean, na.rm = TRUE)
+```
+#Task18
+```{r}
+df.rice %>%
+    # get mean of all these variables
+    dplyr::mutate(MT_1000 = MT / 1000) %>%
+    glimpse()
+```
+#Task19
+```{r}
+df.rice %>% 
+          dplyr::filter(YEAR %in% c(2018,2019)) %>%
+          dplyr::group_by(DIVISION_NAME) %>%
+          dplyr::summarize(Prod_MT = mean(MT)) %>%
+          dplyr::mutate(Prod_1000_MT = Prod_MT / 1000) 
+```
+#Task20
+```{r}
+rice.wider <- df.rice  %>% 
+           dplyr::select (DIVISION_NAME,DISTRICT_NAME, YEAR, MT) %>%
+           dplyr::filter(DIVISION_NAME!= 'Rajshahi') %>%
+           tidyr::pivot_wider(names_from = YEAR, values_from = MT) %>%
+           glimpse()
+```
+
+#Task21
+```{r}
+
+#Error in `tidyr::pivot_longer()`:
+
+#! Can't combine `DIVISION_NAME` <character> and `2012-2013` <list>.
+
+#Backtrace:
+ #1. rice.wider %>% ...
+ #3. tidyr:::pivot_longer.data.frame(...)
+#Error in tidyr::pivot_longer(., cols = c("DIVISION_NAME", "DISTRICT_NAME", 
+```
+#Task22
+```{r}
+bd_soil_data_raw <- bd_soil_data_raw %>%
+      select(Id, DIVISION_NAME,DISTRICT_NAME,UPAZILA_NAMAE,UNION_NAME,Soil_PH, Soil_SOM, Soil_K, Soil_Ca,  N, P, S, B, CU, FE, MN) %>%
+      rename("DIV_NAME"=DIVISION_NAME,
+             "DIS_NAME" =DISTRICT_NAME,
+             "UP_NAME" = UPAZILA_NAMAE,
+             "UNI_NAME" = UNION_NAME,
+             "PH" = Soil_PH,
+             "SOM"= Soil_SOM, 
+             "Soil" = Soil_K) %>% glimpse()
+
+bd_soil_data_raw[bd_soil_data_raw=="N.D."]<- ""
+  
+```
+```{r}
+bd_soil_data_raw <- bd_soil_data_raw %>%
+      mutate_at(c("Soil", "Soil_Ca", "N", "P", "S", "CU", "FE", "MN"), str_replace, "<", "") %>%
+      mutate_at(c(6:16), as.numeric) %>% glimpse()
+```
+
+```{r}
+bd_soil_data_raw["PH"][bd_soil_data_raw["PH"] == 0.6] <- 0.3
+bd_soil_data_raw["SOM"][bd_soil_data_raw["SOM"] == 0.1] <- 0.05
+bd_soil_data_raw["Soil"][bd_soil_data_raw["Soil"] == 0.5] <- 0.25
+bd_soil_data_raw["Soil_Ca"][bd_soil_data_raw["Soil_Ca"] == 1] <- 0.5
+bd_soil_data_raw["N"][bd_soil_data_raw["N"] == 0.5] <- 0.25
+bd_soil_data_raw["P"][bd_soil_data_raw["P"] == 1] <- 0.5
+```
+```{r}
+# counting unique, missing, and median values
+PH<- bd_soil_data_raw %>% summarise(N = length(PH),
+                 na = sum(is.na(PH)),
+                 Min = min(PH, na.rm = TRUE),
+                 Max =max(PH, na.rm = TRUE))
+
+SOM<- bd_soil_data_raw %>% summarise(N = length(SOM),
+                 na = sum(is.na(SOM)),
+                 Min = min(SOM, na.rm = TRUE),
+                 Max =max(SOM, na.rm = TRUE))
+
+Soil<- bd_soil_data_raw %>% summarise(N = length(Soil),
+                 na = sum(is.na(Soil)),
+                 Min = min(Soil, na.rm = TRUE),
+                 Max =max(Soil, na.rm = TRUE))
+
+Soil_Ca<- bd_soil_data_raw %>% summarise(N = length(Soil_Ca),
+                 na = sum(is.na(Soil_Ca)),
+                 Min = min(Soil_Ca, na.rm = TRUE),
+                 Max =max(Soil_Ca, na.rm = TRUE),
+                 )
+
+N<- bd_soil_data_raw %>% summarise(N = length(N),
+                 na = sum(is.na(N)),
+                 Min = min(N, na.rm = TRUE),
+                 Max =max(N, na.rm = TRUE),
+                 )
+P<- bd_soil_data_raw %>% summarise(N = length(P),
+                 na = sum(is.na(P)),
+                 Min = min(P, na.rm = TRUE),
+                 Max =max(P, na.rm = TRUE),
+                 )
+
+#bind the data
+bd_soil_data_raw.sum<- bind_rows(PH, SOM, Soil, Soil_Ca, N, P)
+
+#add.row.names
+row.names(bd_soil_data_raw.sum) <- c("PH", "SOM", "Soil", "Soil_Ca", "N", "P")
+```
+
+```{r}
+head(bd_soil_data_raw.sum)
+```
+
+
