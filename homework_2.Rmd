@@ -1,0 +1,89 @@
+---
+title: "homework_02"
+author: "Rashedul Islam"
+date: "3/14/2023"
+output: html_document
+---
+```{r}
+#chooseCRANmirror()
+local({r <- getOption("repos")
+       r["CRAN"] <- "http://cran.r-project.org" 
+       options(repos=r)
+})
+install.packages("stringr")
+```
+
+
+```{r}
+#packages
+install.packages("janitor")
+install.packages("dplyr")
+
+install.packages("magrittr")
+
+```
+
+```{r}
+#library
+library(tidyverse)
+library(janitor)
+library(readr)
+library(magrittr)
+```
+```{r}
+#Load R Data
+
+bd_arsenic_data_raw <- read_csv("bd_arsenic_data_raw.csv")
+```
+```{r}
+#Task1
+df.01 = bd_arsenic_data_raw %>% 
+  janitor::row_to_names(1, remove_row = TRUE, remove_rows_above = TRUE) %>%
+  glimpse()
+```
+```{r}
+#Task2
+df.02 <-  df.01%>% 
+  janitor::remove_empty(c("rows","cols")) %>%
+  glimpse()
+```
+```{r}
+#Task3
+df.03 <- df.02 %>%
+  janitor::clean_names() %>%
+  glimpse()
+```
+```{r}
+#Task4
+df.04= df.03 %>%
+     dplyr::mutate_at(5:19, as.numeric) %>%
+     dplyr::mutate_at(1:4, as.factor) %>%
+     glimpse()
+```
+
+
+```{r}
+#Task5
+df.05 <- get_dupes(df.04) %>% glimpse()
+
+```
+```{r}
+df.06= df.05 %>% 
+     dplyr::distinct(id,variety,land_type,year,longitude,latitude,grain_as,grain_i_as,straw_as,w_as,s_as,sp_as,sao_as,sp_h,sp_h_2,percent_soc,percent_sand,percent_silt,percent_clay,dupe_count,.keep_all = TRUE) %>%
+     glimpse()
+
+```
+```{r}
+#Task6
+
+df_clean = bd_arsenic_data_raw %>% 
+  janitor::row_to_names(1, remove_row = TRUE, remove_rows_above = TRUE) %>%
+  janitor::remove_empty(c("rows","cols")) %>%
+  janitor::clean_names() %>%
+  dplyr::mutate_at(5:19, as.numeric) %>%
+  dplyr::mutate_at(1:4, as.factor) %>%
+  dplyr::distinct(id,variety,land_type,year,longitude,latitude,grain_as,grain_i_as,straw_as,w_as,s_as,sp_as,sao_as,sp_h,sp_h_2,percent_soc,percent_sand,percent_silt,percent_clay,.keep_all = TRUE) %>%
+     glimpse()
+```
+
+
