@@ -1,0 +1,126 @@
+---
+title: "homework_4"
+author: "Rashedul Islam"
+date: "3/19/2023"
+output: html_document
+---
+
+```{r}
+#chooseCRANmirror()
+local({r <- getOption("repos")
+       r["CRAN"] <- "http://cran.r-project.org" 
+       options(repos=r)
+})
+install.packages("stringr")
+```
+
+
+```{r}
+install.packages("dlookr")
+install.packages("magrittr")
+```
+
+```{r}
+# load library
+library(tidyverse)
+library(dlookr)
+library (flextable)
+library(readr)
+library(dplyr)
+library(magrittr)
+```
+```{r}
+bd_arsenic_data_raw <- read_csv("bd_arsenic_data_raw.csv")
+df <- read_csv("bd_arsenic_data_raw.csv")
+```
+
+```{r}
+#Task1
+dlookr::diagnose(df)%>% 
+  flextable() 
+```
+```{r}
+#Task2
+
+df %>% 
+  dplyr::select(WAs, SAs, SPAs,Sao_As,SpH, SOC, SAND, SILT, CLAY) %>%
+# then diagnose them
+  dlookr::diagnose_numeric()%>% 
+  flextable()
+```
+```{r}
+#Task3
+df %>% 
+# Select categorical variables
+  dplyr::select(Variety, Land_type, YEAR) %>%
+# then diagnose them
+  dlookr::diagnose_category()%>% 
+  flextable()
+```
+```{r}
+#Task4
+df %>% dlookr::diagnose_outlier(WAs, SAs, SPAs,Sao_As,SpH, SOC, SAND, SILT, CLAY)
+```
+```{r}
+#Task5
+df %>%
+  dlookr::plot_outlier(dlookr::diagnose_outlier(df,SOC) %>% 
+                 dplyr::filter(outliers_ratio >= 0.5) %>% 
+                 dplyr::select(variables) %>% 
+                 unlist())
+```
+
+```{r}
+#Task6
+df %>% 
+  dplyr::select(WAs, SAs, SPAs,Sao_As,SpH, SOC, SAND, SILT, CLAY) %>%
+  dlookr::normality() %>%
+  dplyr::filter(p_value <= 0.01) %>% 
+  dplyr::arrange(abs(p_value)) %>%
+  flextable()
+```
+```{r}
+#Task7
+df %>% 
+  dplyr::group_by(WAs) %>%
+  dlookr::normality(SOC) %>%
+  dplyr:: arrange(desc(p_value)) %>%
+  flextable()
+```
+```{r}
+#Task8
+df %>% dlookr::plot_normality(SOC)
+```
+```{r}
+#Task9
+# First select  numerical columns
+des.stata<-df %>% 
+  dplyr::select(WAs, SAs, SPAs,Sao_As,SpH, SOC, SAND, SILT, CLAY) %>%
+  dlookr::describe()
+flextable(des.stata)
+```
+```{r}
+#Task10
+df %>%
+  group_by(WAs) %>% 
+  dlookr::describe(SAs, SPAs,Sao_As,SpH, SOC, SAND, SILT, CLAY) %>%
+  flextable()
+```
+
+```{r}
+#Task11
+df %>% 
+  dplyr::select(WAs, SAs, SPAs,Sao_As,SpH, SOC, SAND, SILT, CLAY) %>%
+  dlookr::correlate()%>% 
+  flextable()
+```
+
+```{r}
+#Task12
+df %>% 
+  group_by(WAs) %>%
+  dplyr::select(WAs,SAs, SPAs,Sao_As,SpH, SOC, SAND, SILT, CLAY) %>%
+  dlookr::correlate()%>% 
+  flextable()
+```
+
