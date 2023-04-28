@@ -1,0 +1,87 @@
+
+
+
+```{r}
+#chooseCRANmirror()
+local({r <- getOption("repos")
+       r["CRAN"] <- "http://cran.r-project.org" 
+       options(repos=r)
+})
+install.packages("stringr")
+```
+
+
+```{r}
+install.packages("MASS")
+install.packages("leaps")
+install.packages("caret")
+```
+
+
+```{r}
+library(tidyverse)
+library(readr)
+library(report)
+library(leaps)
+library(caret)
+```
+
+```{r}
+#Load R Data
+mf <- read_csv("bd_arsenic_data.csv")
+```
+
+```{r}
+# Task1
+df<-mf %>% dplyr::select(WAs,WP,WFe,WEc,WpH,SAoFe,SpH,SEc,SOC,SAND,SILT,CLAY,SP,ELEV,Year_Irrig,DIS_STW)
+model.full <- lm(SOC ~., data = df)
+anova(model.full)
+```
+
+```{r}
+#Task2
+model.MASS <- MASS::stepAIC(model.full, direction = "both", 
+                      trace = FALSE)
+summary(model.MASS)
+
+model.leaps <- leaps::regsubsets(SOC~., data =df, nvmax = 5,
+                     method = "seqrep")
+summary(model.leaps)
+```
+```{r}
+#Task3
+train.control <- trainControl(method = "cv", number = 10)
+model.caret.leaps <- train(SOC ~., data = df,
+                    method = "leapBackward", 
+                    tuneGrid = data.frame(nvmax = 1:5),
+                    trControl = train.control
+                    )
+model.caret.mass <- train(SOC ~., data = df,
+                    method = "lmStepAIC", 
+                    trControl = train.control,
+                    trace = FALSE
+                    )
+
+performance::compare_performance(model.full, model.caret.leaps$finalModel, model.caret.mass$finalModel)
+```
+```{r}
+#Task4
+train.control <- trainControl(method = "cv", number = 10)
+model.caret.leaps <- train(SOC ~., data = df,
+                    method = "leapBackward", 
+                    tuneGrid = data.frame(nvmax = 1:5),
+                    trControl = train.control
+                    )
+model.caret.leaps$results
+summary(model.caret.leaps$finalModel)
+coef(model.caret.leaps$finalModel, 4)
+model.caret.mass <- train(SOC ~., data = df,
+                    method = "lmStepAIC", 
+                    trControl = train.control,
+                    trace = FALSE
+                    )
+model.caret.mass$results
+model.caret.mass$finalModel
+summary(model.caret.mass$finalModel)
+```
+
