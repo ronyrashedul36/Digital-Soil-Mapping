@@ -1,0 +1,88 @@
+
+```{r}
+install.packages("MASS")
+
+```
+```{r}
+install.packages("leaps")
+```
+
+```{r}
+install.packages("caret")
+```
+
+
+```{r}
+library(tidyverse)
+library(readr)
+library(report)
+```
+```{r}
+library(leaps)
+```
+```{r}
+library(caret)
+```
+
+
+```{r}
+mf <- read_csv("gp_soil_data.csv")
+```
+
+```{r}
+df <- mf %>% dplyr::select(SOC, DEM, Slope, MAT, MAP, NDVI)
+```
+```{r}
+model.full <- lm(SOC ~., data = df)
+anova(model.full)
+```
+```{r}
+model.MASS <- MASS :: stepAIC(model.full, direction ="both", trace = FALSE)
+summary(model.MASS)
+```
+```{r}
+report :: report(model.MASS)
+```
+```{r}
+model.leaps <- leaps::regsubsets(SOC ~., data = df, nvmax=5, method="seqrep")
+summary(model.leaps)
+```
+```{r}
+coef(model.leaps, 1:5)
+```
+```{r}
+vcov(model.leaps, 5)
+```
+```{r}
+set.seed(123)
+train.control <- trainControl(method="cv", number=10)
+model.caret.leaps <- train(SOC ~., data = df, method = "leapBackward", tuneGrid = data.frame(nvmax = 1:5),
+                           trControl = train.control)
+model.caret.leaps$results
+```
+
+```{r}
+summary(model.caret.leaps$finalModel)
+```
+
+```{r}
+coef(model.caret.leaps$finalModel, 4)
+```
+
+```{r}
+model.caret.mass <- train(SOC ~., data = df, method = "lmStepAIC", 
+                          trControl = train.control,
+                          trace = FALSE)
+# Model accuracy
+model.caret.mass$results
+```
+```{r}
+model.caret.mass$finalModel
+```
+```{r}
+summary(model.caret.mass$finalModel)
+```
+```{r}
+performance::compare_performance(model.full, model.caret.leaps$finalModel,model.caret.mass$finalModel)
+```
+
